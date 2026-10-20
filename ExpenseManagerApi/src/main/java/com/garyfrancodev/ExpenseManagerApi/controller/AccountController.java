@@ -1,6 +1,5 @@
 package com.garyfrancodev.ExpenseManagerApi.controller;
 
-
 import an.awesome.pipelinr.Pipeline;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.account.AccountDto;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.account.CreateAccountDto;
@@ -21,24 +20,28 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/account")
 public class AccountController {
+
     @Autowired
     private Pipeline pipeline;
 
     @PostMapping()
     public ResponseEntity<UUID> create(@RequestBody CreateAccountDto createAccountDto) {
         CreateAccountCommand createAccountCommand = new CreateAccountCommand(createAccountDto);
-        return createAccountCommand.execute(pipeline);
+        UUID accountId = createAccountCommand.execute(pipeline);
+        return ResponseEntity.ok(accountId);
     }
 
-    @GetMapping("GetAmountTotal")
-    public Double getAmountTotal(@Parameter String userId) {
+    @GetMapping("/amount-total")
+    public ResponseEntity<Double> getAmountTotal(@Parameter(description = "User UUID") @RequestParam String userId) {
         GetAmountTotalQuery getAmountTotalQuery = new GetAmountTotalQuery(UUID.fromString(userId));
-        return getAmountTotalQuery.execute(pipeline);
+        Double total = getAmountTotalQuery.execute(pipeline);
+        return ResponseEntity.ok(total);
     }
 
-    @GetMapping("GetAccounts")
-    public List<AccountDto> getAccounts(@Parameter String userId) {
+    @GetMapping()
+    public ResponseEntity<List<AccountDto>> getAccounts(@Parameter(description = "User UUID") @RequestParam String userId) {
         GetAccountsQuery getAccountsQuery = new GetAccountsQuery(UUID.fromString(userId));
-        return getAccountsQuery.execute(pipeline);
+        List<AccountDto> accounts = getAccountsQuery.execute(pipeline);
+        return ResponseEntity.ok(accounts);
     }
 }

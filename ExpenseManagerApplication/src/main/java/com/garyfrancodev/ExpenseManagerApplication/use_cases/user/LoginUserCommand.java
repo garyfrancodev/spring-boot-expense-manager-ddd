@@ -2,11 +2,9 @@ package com.garyfrancodev.ExpenseManagerApplication.use_cases.user;
 
 import an.awesome.pipelinr.Command;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.user.LoginDto;
-import org.springframework.http.ResponseEntity;
+import com.garyfrancodev.ExpenseManagerDomain.services.AuthResult;
 
-import java.util.Map;
-
-public class LoginUserCommand implements Command<ResponseEntity<Map<String, String>>> {
+public class LoginUserCommand implements Command<AuthResult> {
     private final LoginDto loginDto;
 
     public LoginUserCommand(LoginDto loginDto) {

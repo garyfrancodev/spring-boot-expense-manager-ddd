@@ -5,11 +5,13 @@ import com.garyfrancodev.ExpenseManagerApplication.dtos.user.CreateUserDto;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.user.LoginDto;
 import com.garyfrancodev.ExpenseManagerApplication.use_cases.user.CreateUserCommand;
 import com.garyfrancodev.ExpenseManagerApplication.use_cases.user.LoginUserCommand;
+import com.garyfrancodev.ExpenseManagerDomain.services.AuthResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,18 +20,26 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
     @Autowired
     private Pipeline pipeline;
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginDto loginDto) {
         LoginUserCommand loginUserCommand = new LoginUserCommand(loginDto);
-        return loginUserCommand.execute(pipeline);
+        AuthResult authResult = loginUserCommand.execute(pipeline);
+
+        Map<String, String> body = new HashMap<>();
+        body.put("jwt", authResult.getToken());
+        body.put("userId", authResult.getUserId().toString());
+        body.put("email", authResult.getEmail());
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/register")
-    public UUID createUser(@RequestBody CreateUserDto createUserDto) {
+    public ResponseEntity<UUID> createUser(@RequestBody CreateUserDto createUserDto) {
         CreateUserCommand createUserCommand = new CreateUserCommand(createUserDto);
-        return createUserCommand.execute(pipeline);
+        UUID userId = createUserCommand.execute(pipeline);
+        return ResponseEntity.ok(userId);
     }
 }

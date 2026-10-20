@@ -6,8 +6,8 @@ import com.garyfrancodev.ExpenseManagerInfrastructure.model.AccountJpaModel;
 import com.garyfrancodev.ExpenseManagerInfrastructure.model.UserJpaModel;
 import com.garyfrancodev.ExpenseManagerInfrastructure.repositories.user.UserJpaRepository;
 import com.garyfrancodev.ExpenseManagerInfrastructure.utils.AccountUtils;
+import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class AccountRepositoryImpl implements AccountRepository {
     private UserJpaRepository _userJpaRepository;
 
     @Override
-    public ResponseEntity<UUID> create(Account account) {
+    public UUID create(Account account) {
         AccountJpaModel accountJpaModel = new AccountJpaModel();
         accountJpaModel.setId(account.getId());
         accountJpaModel.setAccountName(account.getAccountName());
@@ -30,13 +30,23 @@ public class AccountRepositoryImpl implements AccountRepository {
         accountJpaModel.setAmount(account.getAmount());
         accountJpaModel.setUser(_userJpaRepository.findById(account.getUserId()).orElseThrow());
 
-        return ResponseEntity.ok(_accountJpaRepository.save(accountJpaModel).getId());
+        return _accountJpaRepository.save(accountJpaModel).getId();
     }
 
     @Override
     public Account getAccountById(UUID id) {
         AccountJpaModel accountJpaModel = _accountJpaRepository.findById(id).orElseThrow();
-        return new Account(accountJpaModel.getAccountName(), accountJpaModel.getDescription(), accountJpaModel.getAmount(), accountJpaModel.getUser().getId(), accountJpaModel.getId());
+        try {
+            return new Account(
+                    accountJpaModel.getAccountName(),
+                    accountJpaModel.getDescription(),
+                    accountJpaModel.getAmount(),
+                    accountJpaModel.getUser().getId(),
+                    accountJpaModel.getId()
+            );
+        } catch (BusinessRuleValidationException e) {
+            throw new RuntimeException("Error mapping account from database: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -49,8 +59,14 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Double GetAmountTotalByUserId(UUID userId) {
+        return getAmountTotalByUserId(userId);
+    }
+
+    @Override
+    public Double getAmountTotalByUserId(UUID userId) {
         UserJpaModel userJpaModel = _userJpaRepository.findById(userId).orElseThrow();
-        return _accountJpaRepository.total(userJpaModel);
+        Double total = _accountJpaRepository.total(userJpaModel);
+        return total != null ? total : 0.0;
     }
 
     @Override
@@ -59,6 +75,4 @@ public class AccountRepositoryImpl implements AccountRepository {
         List<AccountJpaModel> accountJpaModels = _accountJpaRepository.get(userJpaModel);
         return accountJpaModels.stream().map(AccountUtils::jpaModelToDomainModel).toList();
     }
-
-
 }

@@ -5,13 +5,12 @@ import com.garyfrancodev.ExpenseManagerApplication.dtos.transaction.TransactionD
 import com.garyfrancodev.ExpenseManagerDomain.model.Transaction;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class GetTransactionsByUserIdHandler implements Command.Handler<GetTransactionsByUserIdQuery, ResponseEntity<List<TransactionDto>>> {
+public class GetTransactionsByUserIdHandler implements Command.Handler<GetTransactionsByUserIdQuery, List<TransactionDto>> {
 
     private final TransactionRepository _transactionRepository;
 
@@ -21,9 +20,21 @@ public class GetTransactionsByUserIdHandler implements Command.Handler<GetTransa
     }
 
     @Override
-    public ResponseEntity<List<TransactionDto>> handle(GetTransactionsByUserIdQuery getTransactionsByUserIdQuery) {
+    public List<TransactionDto> handle(GetTransactionsByUserIdQuery getTransactionsByUserIdQuery) {
         List<Transaction> transactionList = _transactionRepository.transactionListByUserId(getTransactionsByUserIdQuery.getUserId());
-
-        return ResponseEntity.ok(transactionList.stream().map(transaction -> new TransactionDto(transaction.getAccountId(), transaction.getUserId(), transaction.getAmount(), transaction.getDate(), transaction.getTransactionDescription(), transaction.getTransactionType(), transaction.getId())).toList());
+        if (transactionList == null) {
+            return List.of();
+        }
+        return transactionList.stream()
+                .map(transaction -> new TransactionDto(
+                        transaction.getAccountId(),
+                        transaction.getUserId(),
+                        transaction.getAmount(),
+                        transaction.getDate(),
+                        transaction.getTransactionDescription(),
+                        transaction.getTransactionType(),
+                        transaction.getId()
+                ))
+                .toList();
     }
 }

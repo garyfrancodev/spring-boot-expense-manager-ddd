@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -29,33 +28,40 @@ import java.util.UUID;
 public class TransactionController {
 
     @Autowired
-    Pipeline pipeline;
+    private Pipeline pipeline;
 
     @PostMapping()
     public ResponseEntity<UUID> create(@RequestBody CreateTransactionDto createTransactionDto) {
         CreateTransactionCommand createTransactionCommand = new CreateTransactionCommand(createTransactionDto);
-        return createTransactionCommand.execute(pipeline);
+        UUID transactionId = createTransactionCommand.execute(pipeline);
+        return ResponseEntity.ok(transactionId);
     }
 
     @PutMapping()
     public ResponseEntity<UUID> update(@RequestBody UpdateTransactionDto updateTransactionDto) {
         UpdateTransactionCommand updateTransactionCommand = new UpdateTransactionCommand(updateTransactionDto);
-        return updateTransactionCommand.execute(pipeline);
+        UUID transactionId = updateTransactionCommand.execute(pipeline);
+        return ResponseEntity.ok(transactionId);
     }
 
     @GetMapping()
-    public ResponseEntity<List<TransactionDto>> getTransactionsByUserId(@Parameter String userId) {
+    public ResponseEntity<List<TransactionDto>> getTransactionsByUserId(@Parameter(description = "User UUID") @RequestParam String userId) {
         GetTransactionsByUserIdQuery getTransactionsByUserIdQuery = new GetTransactionsByUserIdQuery(UUID.fromString(userId));
-        return getTransactionsByUserIdQuery.execute(pipeline);
+        List<TransactionDto> list = getTransactionsByUserIdQuery.execute(pipeline);
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/period")
-    public ResponseEntity<List<TransactionDto>> getTransactionsByUserIdByPeriod(@Parameter String userId, @Parameter String startDate,@Parameter String endDate) {
+    public ResponseEntity<List<TransactionDto>> getTransactionsByUserIdByPeriod(
+            @Parameter(description = "User UUID") @RequestParam String userId,
+            @Parameter(description = "Start Date ISO") @RequestParam String startDate,
+            @Parameter(description = "End Date ISO") @RequestParam String endDate) {
         Date start = convertToDate(LocalDateTime.ofInstant(Instant.parse(startDate), ZoneId.systemDefault()));
         Date end = convertToDate(LocalDateTime.ofInstant(Instant.parse(endDate), ZoneId.systemDefault()));
 
-        GetTransactionsByUserIdByPeriodQuery getTransactionsByUserIdByPeriodQuery = new GetTransactionsByUserIdByPeriodQuery(UUID.fromString(userId), start, end);
-        return getTransactionsByUserIdByPeriodQuery.execute(pipeline);
+        GetTransactionsByUserIdByPeriodQuery query = new GetTransactionsByUserIdByPeriodQuery(UUID.fromString(userId), start, end);
+        List<TransactionDto> list = query.execute(pipeline);
+        return ResponseEntity.ok(list);
     }
 
     private static Date convertToDate(LocalDateTime localDateTime) {

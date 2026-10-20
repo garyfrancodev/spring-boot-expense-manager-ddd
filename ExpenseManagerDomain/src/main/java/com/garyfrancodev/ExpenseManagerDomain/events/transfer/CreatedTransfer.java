@@ -1,12 +1,15 @@
 package com.garyfrancodev.ExpenseManagerDomain.events.transfer;
 
-import an.awesome.pipelinr.Notification;
 import com.garyfrancodev.ExpenseManagerSharedKernel.core.DomainEvent;
 
 import java.util.Date;
 import java.util.UUID;
 
-public class CreatedTransfer extends DomainEvent implements Notification {
+/**
+ * Domain Event raised when an inter-account transfer is created.
+ */
+public class CreatedTransfer extends DomainEvent {
+    private final UUID transferId;
     private final UUID accountSend;
     private final UUID accountReceives;
     private final Double amount;
@@ -14,14 +17,23 @@ public class CreatedTransfer extends DomainEvent implements Notification {
     private final String description;
     private final UUID categoryId;
 
-    public CreatedTransfer(Date occurredOn, UUID accountSend, UUID accountReceives, Double amount,UUID userId, String description, UUID categoryId) {
+    public CreatedTransfer(UUID transferId, UUID accountSend, UUID accountReceives, Double amount, UUID userId, String description, UUID categoryId, Date occurredOn) {
         super(occurredOn);
+        this.transferId = transferId;
         this.accountSend = accountSend;
         this.accountReceives = accountReceives;
         this.amount = amount;
         this.userId = userId;
         this.description = description;
         this.categoryId = categoryId;
+    }
+
+    public CreatedTransfer(Date occurredOn, UUID accountSend, UUID accountReceives, Double amount, UUID userId, String description, UUID categoryId) {
+        this(null, accountSend, accountReceives, amount, userId, description, categoryId, occurredOn);
+    }
+
+    public UUID getTransferId() {
+        return transferId;
     }
 
     public UUID getAccountSend() {

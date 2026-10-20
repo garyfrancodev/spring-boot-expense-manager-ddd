@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: expense-manager-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+              - "http://127.0.0.1:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        - id: expense-api
+          uri: ${EXPENSE_API_URI:http://localhost:8081}
+          predicates:
+            - Path=/api/**
+        - id: swagger-docs
+          uri: ${EXPENSE_API_URI:http://localhost:8081}
+          predicates:
+            - Path=/v3/api-docs/**, /swagger-ui/**, /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always

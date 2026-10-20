@@ -1,7 +1,6 @@
 package com.garyfrancodev.ExpenseManagerApi.controller;
 
 import an.awesome.pipelinr.Pipeline;
-import com.garyfrancodev.ExpenseManagerApplication.dtos.transaction.TransactionDto;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.transfer.CreateTransferDto;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.transfer.TransferDto;
 import com.garyfrancodev.ExpenseManagerApplication.use_cases.transfer.command.CreateTransferCommand;
@@ -20,17 +19,21 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/transfer")
 public class TransferController {
+
     @Autowired
-    Pipeline pipeline;
+    private Pipeline pipeline;
+
     @GetMapping()
-    public ResponseEntity<List<TransferDto>> getTransferByUserId(@Parameter String userId) {
+    public ResponseEntity<List<TransferDto>> getTransferByUserId(@Parameter(description = "User UUID") @RequestParam String userId) {
         GetTransfersByUserIdQuery getTransfersByUserIdQuery = new GetTransfersByUserIdQuery(UUID.fromString(userId));
-        return getTransfersByUserIdQuery.execute(pipeline);
+        List<TransferDto> list = getTransfersByUserIdQuery.execute(pipeline);
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping()
-    public ResponseEntity<UUID> createTransfer(@RequestBody CreateTransferDto createTransferDto){
+    public ResponseEntity<UUID> createTransfer(@RequestBody CreateTransferDto createTransferDto) {
         CreateTransferCommand transferCommand = new CreateTransferCommand(createTransferDto);
-        return transferCommand.execute(pipeline);
+        UUID transferId = transferCommand.execute(pipeline);
+        return ResponseEntity.ok(transferId);
     }
 }

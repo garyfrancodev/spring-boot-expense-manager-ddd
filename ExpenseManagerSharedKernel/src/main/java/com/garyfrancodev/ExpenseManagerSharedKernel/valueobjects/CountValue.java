@@ -2,25 +2,42 @@ package com.garyfrancodev.ExpenseManagerSharedKernel.valueobjects;
 
 import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
 import com.garyfrancodev.ExpenseManagerSharedKernel.core.ValueObject;
-import lombok.Getter;
+import com.garyfrancodev.ExpenseManagerSharedKernel.rules.NonNegativeAmountRule;
 
-@Getter
-public class CountValue extends ValueObject {
+import java.math.BigDecimal;
+import java.util.Objects;
+
+/**
+ * Value Object representing a non-negative counter.
+ */
+public final class CountValue extends ValueObject {
+
     private final int value;
 
     public CountValue(int value) throws BusinessRuleValidationException {
-        if (value < 0) {
-            throw new BusinessRuleValidationException("Cantidad value cannot be negative");
-        }
-
+        checkRule(new NonNegativeAmountRule(BigDecimal.valueOf(value), "Count"));
         this.value = value;
     }
 
-    public static int implicitToInt(CountValue countValue) {
-        return countValue.value;
+    public int getValue() {
+        return value;
     }
 
-    public static CountValue implicitToCountValue(int value) throws BusinessRuleValidationException {
-        return new CountValue(value);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CountValue that = (CountValue) o;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
     }
 }

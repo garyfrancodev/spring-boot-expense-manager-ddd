@@ -1,28 +1,44 @@
 package com.garyfrancodev.ExpenseManagerApplication.use_cases.account.command;
 
 import an.awesome.pipelinr.Command;
+import com.garyfrancodev.ExpenseManagerApplication.dispatcher.DomainEventDispatcher;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.account.CreateAccountDto;
 import com.garyfrancodev.ExpenseManagerDomain.model.Account;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.AccountRepository;
+import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Component
-public class CreateAccountHandler implements Command.Handler<CreateAccountCommand, ResponseEntity<UUID>> {
+public class CreateAccountHandler implements Command.Handler<CreateAccountCommand, UUID> {
     private final AccountRepository _accountRepository;
+    private final DomainEventDispatcher _domainEventDispatcher;
 
     @Autowired
-    public CreateAccountHandler(AccountRepository accountRepository) {
+    public CreateAccountHandler(AccountRepository accountRepository, DomainEventDispatcher domainEventDispatcher) {
         this._accountRepository = accountRepository;
+        this._domainEventDispatcher = domainEventDispatcher;
     }
 
     @Override
-    public ResponseEntity<UUID> handle(CreateAccountCommand createAccountCommand) {
+    @Transactional(rollbackFor = Exception.class)
+    public UUID handle(CreateAccountCommand createAccountCommand) {
         CreateAccountDto createAccountDto = createAccountCommand.getCreateAccountDto();
-        Account account = new Account(createAccountDto.getAccountName(), createAccountDto.getDescription(), createAccountDto.getAmount(), createAccountDto.getUserId());
-        return _accountRepository.create(account);
+        try {
+            Account account = new Account(
+                    createAccountDto.getAccountName(),
+                    createAccountDto.getDescription(),
+                    createAccountDto.getAmount(),
+                    createAccountDto.getUserId()
+            );
+            UUID accountId = _accountRepository.create(account);
+            _domainEventDispatcher.dispatchEventsFor(account);
+            return accountId;
+        } catch (BusinessRuleValidationException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

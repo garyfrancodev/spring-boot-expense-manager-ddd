@@ -5,13 +5,12 @@ import com.garyfrancodev.ExpenseManagerApplication.dtos.category.CategoryDto;
 import com.garyfrancodev.ExpenseManagerDomain.model.Category;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class GetCategoriesHandler implements Command.Handler<GetCategoriesQuery, ResponseEntity<List<CategoryDto>>> {
+public class GetCategoriesHandler implements Command.Handler<GetCategoriesQuery, List<CategoryDto>> {
     private final CategoryRepository _categoryRepository;
 
     @Autowired
@@ -20,11 +19,17 @@ public class GetCategoriesHandler implements Command.Handler<GetCategoriesQuery,
     }
 
     @Override
-    public ResponseEntity<List<CategoryDto>> handle(GetCategoriesQuery getCategoriesQuery) {
+    public List<CategoryDto> handle(GetCategoriesQuery getCategoriesQuery) {
         List<Category> categoryList = _categoryRepository.getCategoriesByUserId(getCategoriesQuery.getUserId());
-        List<CategoryDto> categoryDtos = categoryList.stream().map(category -> new CategoryDto(category.getCategoryIcon(),category.getCategoryName().getName(), category.getCategoryDescription(), category.getCategoryType(), category.getUserId(), category.getId())).toList();
-
-        return ResponseEntity.ok(categoryDtos);
-
+        return categoryList.stream()
+                .map(category -> new CategoryDto(
+                        category.getCategoryIcon(),
+                        category.getCategoryName() != null ? category.getCategoryName().getName() : "",
+                        category.getCategoryDescription(),
+                        category.getCategoryType(),
+                        category.getUserId(),
+                        category.getId()
+                ))
+                .toList();
     }
 }

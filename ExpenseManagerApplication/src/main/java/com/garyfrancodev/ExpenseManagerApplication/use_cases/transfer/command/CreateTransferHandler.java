@@ -1,37 +1,47 @@
 package com.garyfrancodev.ExpenseManagerApplication.use_cases.transfer.command;
 
 import an.awesome.pipelinr.Command;
-import an.awesome.pipelinr.Pipeline;
+import com.garyfrancodev.ExpenseManagerApplication.dispatcher.DomainEventDispatcher;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.transfer.CreateTransferDto;
-import com.garyfrancodev.ExpenseManagerApplication.use_cases.transfer.command.CreateTransferCommand;
-import com.garyfrancodev.ExpenseManagerDomain.events.transfer.CreatedTransfer;
-import com.garyfrancodev.ExpenseManagerDomain.model.Account;
 import com.garyfrancodev.ExpenseManagerDomain.model.Transfer;
-import com.garyfrancodev.ExpenseManagerDomain.repositories.AccountRepository;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.TransferRepository;
+import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Component
-public class CreateTransferHandler implements Command.Handler<CreateTransferCommand, ResponseEntity<UUID>> {
-    @Autowired
-    private Pipeline pipeline;
+public class CreateTransferHandler implements Command.Handler<CreateTransferCommand, UUID> {
+
     private final TransferRepository _transferRepository;
-    public CreateTransferHandler(TransferRepository transferRepository) {
+    private final DomainEventDispatcher _domainEventDispatcher;
+
+    @Autowired
+    public CreateTransferHandler(TransferRepository transferRepository, DomainEventDispatcher domainEventDispatcher) {
         this._transferRepository = transferRepository;
+        this._domainEventDispatcher = domainEventDispatcher;
     }
 
     @Override
-    public ResponseEntity<UUID> handle(CreateTransferCommand createTransferCommand) {
+    @Transactional(rollbackFor = Exception.class)
+    public UUID handle(CreateTransferCommand createTransferCommand) {
         CreateTransferDto createTransferDto = createTransferCommand.getCreateTransferDto();
-        Transfer transfer = new Transfer(createTransferDto.getAccountSend(), createTransferDto.getAccountReceives(), createTransferDto.getAmount(), createTransferDto.getDate(), createTransferDto.getUserId());
-        _transferRepository.create(transfer);
+        try {
+            Transfer transfer = new Transfer(
+                    createTransferDto.getAccountSend(),
+                    createTransferDto.getAccountReceives(),
+                    createTransferDto.getAmount(),
+                    createTransferDto.getDate(),
+                    createTransferDto.getUserId()
+            );
 
-        new CreatedTransfer(transfer.getDate(),createTransferDto.getAccountSend(), createTransferDto.getAccountReceives(), createTransferDto.getAmount(), createTransferDto.getUserId(), "TODO", UUID.randomUUID()).send(pipeline);
-
-        return ResponseEntity.ok(transfer.getId());
+            UUID id = _transferRepository.create(transfer);
+            _domainEventDispatcher.dispatchEventsFor(transfer);
+            return id;
+        } catch (BusinessRuleValidationException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

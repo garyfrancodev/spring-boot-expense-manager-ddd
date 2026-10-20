@@ -22,22 +22,20 @@ public class JwtService {
     private static final String SECRET_KEY = "ZL8qCMMxV/76gX5ES2d9ROwnnqiz80LP482h1Fem1bA=";
 
     public String getToken(User user) {
-        getUsernameFromToken(getToken(new HashMap<>(), user));
         return getToken(new HashMap<>(), user);
     }
 
     private String getToken(Map<String, Object> extraClaims, User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", user.getId().toString());
-        claims.put("iat", new Date().getTime());
-        claims.put("exp", new Date(System.currentTimeMillis() + 1000 * 60 * 24).getTime());
+        long now = System.currentTimeMillis();
+        long expirationTime = now + (1000L * 60 * 60 * 24); // 24 hours
+        Map<String, Object> claims = new HashMap<>(extraClaims);
 
         return Jwts
                 .builder()
                 .setClaims(claims)
                 .setSubject(user.getEmail())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24))
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(expirationTime))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

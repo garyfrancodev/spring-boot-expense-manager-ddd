@@ -3,6 +3,7 @@ package com.garyfrancodev.ExpenseManagerInfrastructure.repositories.user;
 import com.garyfrancodev.ExpenseManagerDomain.model.User;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.UserRepository;
 import com.garyfrancodev.ExpenseManagerInfrastructure.model.UserJpaModel;
+import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +17,6 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public UUID create(User user) {
-//        user.getDomainEvents()
         UserJpaModel userJpaModel = new UserJpaModel();
         userJpaModel.setId(user.getId());
         userJpaModel.setFirstName(user.getFirstName());
@@ -29,6 +29,16 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User findId(UUID id) {
         UserJpaModel userJpaModel = _userCrudRepository.findById(id).orElseThrow();
-        return new User(userJpaModel.getFirstName(), userJpaModel.getLastName(), userJpaModel.getEmail(), userJpaModel.getPassword());
+        try {
+            return new User(
+                    userJpaModel.getFirstName(),
+                    userJpaModel.getLastName(),
+                    userJpaModel.getEmail(),
+                    userJpaModel.getPassword(),
+                    userJpaModel.getId()
+            );
+        } catch (BusinessRuleValidationException e) {
+            throw new RuntimeException("Error mapping User JPA to Domain model: " + e.getMessage(), e);
+        }
     }
 }

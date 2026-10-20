@@ -2,11 +2,10 @@ package com.garyfrancodev.ExpenseManagerApplication.use_cases.transaction.comman
 
 import an.awesome.pipelinr.Command;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.transaction.UpdateTransactionDto;
-import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
-public class UpdateTransactionCommand implements Command<ResponseEntity<UUID>> {
+public class UpdateTransactionCommand implements Command<UUID> {
     private final UpdateTransactionDto updateTransactionDto;
 
     public UpdateTransactionCommand(UpdateTransactionDto updateTransactionDto) {

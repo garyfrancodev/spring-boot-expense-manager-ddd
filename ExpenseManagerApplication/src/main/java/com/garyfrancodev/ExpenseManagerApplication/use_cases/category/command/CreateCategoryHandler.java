@@ -2,7 +2,6 @@ package com.garyfrancodev.ExpenseManagerApplication.use_cases.category.command;
 
 import an.awesome.pipelinr.Command;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.category.CreateCategoryDto;
-import com.garyfrancodev.ExpenseManagerApplication.use_cases.category.command.CreateCategoryCommand;
 import com.garyfrancodev.ExpenseManagerDomain.model.Category;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.CategoryRepository;
 import com.garyfrancodev.ExpenseManagerSharedKernel.core.BusinessRuleValidationException;
@@ -21,14 +20,21 @@ public class CreateCategoryHandler implements Command.Handler<CreateCategoryComm
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     public UUID handle(CreateCategoryCommand createCategoryCommand) {
         CreateCategoryDto createCategoryDto = createCategoryCommand.getCreateCategoryDto();
         try {
-            Category category = new Category(createCategoryDto.getCategoryIcon(), createCategoryDto.getCategoryName(), createCategoryDto.getCategoryDescription(), createCategoryDto.getCategoryType(), createCategoryDto.getUserId());
+            Category category = new Category(
+                    createCategoryDto.getCategoryIcon(),
+                    createCategoryDto.getCategoryName(),
+                    createCategoryDto.getCategoryDescription(),
+                    createCategoryDto.getCategoryType(),
+                    createCategoryDto.getUserId()
+            );
             _categoryRepository.create(category);
+            return category.getId();
         } catch (BusinessRuleValidationException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Validation error creating category: " + e.getMessage(), e);
         }
-        return null;
     }
 }

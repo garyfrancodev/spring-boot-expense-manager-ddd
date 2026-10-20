@@ -25,7 +25,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public UUID create(Category category) {
         CategoryJpaModel categoryJpaModel = new CategoryJpaModel();
         categoryJpaModel.setCategoryIcon(category.getCategoryIcon());
-        categoryJpaModel.setCategoryName(category.getCategoryName().getName());
+        categoryJpaModel.setCategoryName(category.getCategoryName() != null ? category.getCategoryName().getName() : "");
         categoryJpaModel.setCategoryDescription(category.getCategoryDescription());
         categoryJpaModel.setCategoryType(category.getCategoryType());
         categoryJpaModel.setId(category.getId());
@@ -40,9 +40,16 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
         return categoryJpaList.stream().map(categoryJpa -> {
             try {
-                return new Category(categoryJpa.getCategoryName(), categoryJpa.getCategoryIcon(), categoryJpa.getCategoryDescription(), categoryJpa.getCategoryType(), categoryJpa.getUser().getId(), categoryJpa.getId());
+                return new Category(
+                        categoryJpa.getCategoryIcon(),
+                        categoryJpa.getCategoryName(),
+                        categoryJpa.getCategoryDescription(),
+                        categoryJpa.getCategoryType(),
+                        categoryJpa.getUser() != null ? categoryJpa.getUser().getId() : null,
+                        categoryJpa.getId()
+                );
             } catch (BusinessRuleValidationException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error mapping Category JPA to Domain model: " + e.getMessage(), e);
             }
         }).toList();
     }
@@ -51,6 +58,16 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public Category getCategoryDefaultByUserByCategoryType(UUID userId, String nameDefault) throws BusinessRuleValidationException {
         UserJpaModel userJpaModel = userJpaRepository.findById(userId).orElseThrow();
         CategoryJpaModel categoryJpa = categoryJpaRepository.getCategoryJpaModelsByUserIdByCategoryType(userJpaModel, nameDefault);
-        return new Category(categoryJpa.getCategoryName(), categoryJpa.getCategoryIcon(), categoryJpa.getCategoryDescription(), categoryJpa.getCategoryType(), categoryJpa.getUser().getId(), categoryJpa.getId());
+        if (categoryJpa == null) {
+            return null;
+        }
+        return new Category(
+                categoryJpa.getCategoryIcon(),
+                categoryJpa.getCategoryName(),
+                categoryJpa.getCategoryDescription(),
+                categoryJpa.getCategoryType(),
+                categoryJpa.getUser() != null ? categoryJpa.getUser().getId() : null,
+                categoryJpa.getId()
+        );
     }
 }

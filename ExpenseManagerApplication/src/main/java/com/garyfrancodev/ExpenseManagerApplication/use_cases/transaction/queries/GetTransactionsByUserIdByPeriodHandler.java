@@ -5,13 +5,12 @@ import com.garyfrancodev.ExpenseManagerApplication.dtos.transaction.TransactionD
 import com.garyfrancodev.ExpenseManagerDomain.model.Transaction;
 import com.garyfrancodev.ExpenseManagerDomain.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class GetTransactionsByUserIdByPeriodHandler implements Command.Handler<GetTransactionsByUserIdByPeriodQuery, ResponseEntity<List<TransactionDto>>> {
+public class GetTransactionsByUserIdByPeriodHandler implements Command.Handler<GetTransactionsByUserIdByPeriodQuery, List<TransactionDto>> {
 
     private final TransactionRepository _transactionRepository;
 
@@ -21,9 +20,25 @@ public class GetTransactionsByUserIdByPeriodHandler implements Command.Handler<G
     }
 
     @Override
-    public ResponseEntity<List<TransactionDto>> handle(GetTransactionsByUserIdByPeriodQuery getTransactionsByUserIdQuery) {
-        List<Transaction> transactionList = _transactionRepository.transactionListByUserIdByPeriod(getTransactionsByUserIdQuery.getUserId(), getTransactionsByUserIdQuery.getStartDate(), getTransactionsByUserIdQuery.getEndDate());
-
-        return ResponseEntity.ok(transactionList.stream().map(transaction -> new TransactionDto(transaction.getAccountId(), transaction.getUserId(), transaction.getAmount(), transaction.getDate(), transaction.getTransactionDescription(), transaction.getTransactionType(), transaction.getId())).toList());
+    public List<TransactionDto> handle(GetTransactionsByUserIdByPeriodQuery query) {
+        List<Transaction> transactionList = _transactionRepository.transactionListByUserIdByPeriod(
+                query.getUserId(),
+                query.getStartDate(),
+                query.getEndDate()
+        );
+        if (transactionList == null) {
+            return List.of();
+        }
+        return transactionList.stream()
+                .map(transaction -> new TransactionDto(
+                        transaction.getAccountId(),
+                        transaction.getUserId(),
+                        transaction.getAmount(),
+                        transaction.getDate(),
+                        transaction.getTransactionDescription(),
+                        transaction.getTransactionType(),
+                        transaction.getId()
+                ))
+                .toList();
     }
 }

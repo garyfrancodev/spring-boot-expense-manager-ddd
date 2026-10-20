@@ -2,11 +2,10 @@ package com.garyfrancodev.ExpenseManagerApplication.use_cases.account.command;
 
 import an.awesome.pipelinr.Command;
 import com.garyfrancodev.ExpenseManagerApplication.dtos.account.CreateAccountDto;
-import org.springframework.http.ResponseEntity;
 
 import java.util.UUID;
 
-public class CreateAccountCommand implements Command<ResponseEntity<UUID>> {
+public class CreateAccountCommand implements Command<UUID> {
     private final CreateAccountDto createAccountDto;
 
     public CreateAccountCommand(CreateAccountDto createAccountDto) {
